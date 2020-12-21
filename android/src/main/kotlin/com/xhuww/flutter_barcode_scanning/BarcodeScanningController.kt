@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.Surface
 import androidx.camera.core.*
-import androidx.camera.core.Preview.SurfaceProvider
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -13,6 +12,7 @@ import androidx.lifecycle.LifecycleRegistry
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry
 import java.util.*
 import java.util.concurrent.Executors
@@ -29,7 +29,7 @@ class BarcodeScanningController(
     private val mainExecutor = ContextCompat.getMainExecutor(activity.baseContext)
     override fun getLifecycle(): Lifecycle = lifecycle
 
-    fun initialize() {
+    fun initialize(result: MethodChannel.Result) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(activity)
         cameraProviderFuture.addListener({
             val preview = Preview.Builder().build()
@@ -50,6 +50,10 @@ class BarcodeScanningController(
                 )
             }
         }, mainExecutor)
+
+        lifecycle.currentState = Lifecycle.State.RESUMED
+        val reply = mapOf(Pair("textureId", flutterTexture.id()))
+        result.success(reply)
     }
 
     fun startBarcodeAnalyzerStream(streamChannel: EventChannel) {
@@ -64,6 +68,10 @@ class BarcodeScanningController(
         })
     }
 
+    fun stopBarcodeAnalyzerStream(streamChannel: EventChannel) {
+        imageAnalyzer.clearAnalyzer()
+        streamChannel.setStreamHandler(null)
+    }
 
     @SuppressLint("UnsafeExperimentalUsageError")
     private fun analyze(imageProxy: ImageProxy, events: EventChannel.EventSink) {
@@ -98,5 +106,9 @@ class BarcodeScanningController(
                     events.error("barcodeAnalyzerError", it.localizedMessage, null)
                 }
                 .addOnCompleteListener { imageProxy.close() }
+    }
+
+    fun dispose(streamChannel: EventChannel) {
+
     }
 }

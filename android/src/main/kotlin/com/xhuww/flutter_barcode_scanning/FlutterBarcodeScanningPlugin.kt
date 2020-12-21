@@ -7,8 +7,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
 /** FlutterBarcodeScanningPlugin */
-const val PLUGIN_NAME = "flutter_barcode_scanning"
-
 class FlutterBarcodeScanningPlugin : FlutterPlugin, ActivityAware {
 
     private var flutterPluginBinding: FlutterPluginBinding? = null

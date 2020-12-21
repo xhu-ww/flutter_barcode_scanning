@@ -7,16 +7,15 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.view.TextureRegistry
-import io.flutter.view.TextureRegistry.SurfaceTextureEntry
 
 class MethodCallHandlerImpl(
         activity: Activity,
         messenger: BinaryMessenger,
-        private val textureRegistry: TextureRegistry
+        textureRegistry: TextureRegistry
 ) : MethodCallHandler {
     private val methodChannel = MethodChannel(messenger, "plugins.flutter.io/barcodeScanning")
     private val analyzerStreamChannel = EventChannel(messenger, "plugins.flutter.io/barcodeScanning/analyzerStream")
-    private var barcodeScanningController: BarcodeScanningController? = null
+    private val barcodeScanningController = BarcodeScanningController(activity, textureRegistry.createSurfaceTexture())
 
     init {
         methodChannel.setMethodCallHandler(this)
@@ -24,25 +23,19 @@ class MethodCallHandlerImpl(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "initialize" -> {
-                barcodeScanningController?.initialize()
-            }
-            "startBarcodeAnalyzerStream" -> {
-                barcodeScanningController?.startBarcodeAnalyzerStream(analyzerStreamChannel)
-            }
-            "stopBarcodeAnalyzerStream" -> {
-
-            }
+            "initialize" ->
+                barcodeScanningController.initialize(result)
+            "startBarcodeAnalyzerStream" ->
+                barcodeScanningController.startBarcodeAnalyzerStream(analyzerStreamChannel)
+            "stopBarcodeAnalyzerStream" ->
+                barcodeScanningController.stopBarcodeAnalyzerStream(analyzerStreamChannel)
             "dispose" -> {
+
             }
         }
     }
 
     fun stopListening() {
         methodChannel.setMethodCallHandler(null)
-    }
-
-    fun initializeCamera() {
-        val flutterSurfaceTexture = textureRegistry.createSurfaceTexture()
     }
 }
